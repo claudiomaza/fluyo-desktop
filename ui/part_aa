@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fluyo — diagramas que fluyen</title>
+<meta name="description" content="Crea diagramas animados de arquitectura y exporta GIF, PNG o JPG directo desde el navegador. Gratis, sin cuenta, sin backend.">
+<meta property="og:title" content="Fluyo — diagramas que fluyen">
+<meta property="og:description" content="Diagramas animados de arquitectura con export a GIF, PNG y JPG. Gratis y directo en tu navegador.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23161616'/%3E%3Ccircle cx='18' cy='32' r='7' fill='%23d08b5b'/%3E%3Ccircle cx='40' cy='32' r='5' fill='%23d08b5b' opacity='.65'/%3E%3Ccircle cx='54' cy='32' r='3.4' fill='%23d08b5b' opacity='.35'/%3E%3C/svg%3E">
+<script>// gif.js 0.2.0 - https://github.com/jnordberg/gif.js
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.GIF=f()}})(function(){var define,module,exports;return function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s}({1:[function(require,module,exports){function EventEmitter(){this._events=this._events||{};this._maxListeners=this._maxListeners||undefined}module.exports=EventEmitter;EventEmitter.EventEmitter=EventEmitter;EventEmitter.prototype._events=undefined;EventEmitter.prototype._maxListeners=undefined;EventEmitter.defaultMaxListeners=10;EventEmitter.prototype.setMaxListeners=function(n){if(!isNumber(n)||n<0||isNaN(n))throw TypeError("n must be a positive number");this._maxListeners=n;return this};EventEmitter.prototype.emit=function(type){var er,handler,len,args,i,listeners;if(!this._events)this._events={};if(type==="error"){if(!this._events.error||isObject(this._events.error)&&!this._events.error.length){er=arguments[1];if(er instanceof Error){throw er}else{var err=new Error('Uncaught, unspecified "error" event. ('+er+")");err.context=er;throw err}}}handler=this._events[type];if(isUndefined(handler))return false;if(isFunction(handler)){switch(arguments.length){case 1:handler.call(this);break;case 2:handler.call(this,arguments[1]);break;case 3:handler.call(this,arguments[1],arguments[2]);break;default:args=Array.prototype.slice.call(arguments,1);handler.apply(this,args)}}else if(isObject(handler)){args=Array.prototype.slice.call(arguments,1);listeners=handler.slice();len=listeners.length;for(i=0;i<len;i++)listeners[i].apply(this,args)}return true};EventEmitter.prototype.addListener=function(type,listener){var m;if(!isFunction(listener))throw TypeError("listener must be a function");if(!this._events)this._events={};if(this._events.newListener)this.emit("newListener",type,isFunction(listener.listener)?listener.listener:listener);if(!this._events[type])this._events[type]=listener;else if(isObject(this._events[type]))this._events[type].push(listener);else this._events[type]=[this._events[type],listener];if(isObject(this._events[type])&&!this._events[type].warned){if(!isUndefined(this._maxListeners)){m=this._maxListeners}else{m=EventEmitter.defaultMaxListeners}if(m&&m>0&&this._events[type].length>m){this._events[type].warned=true;console.error("(node) warning: possible EventEmitter memory "+"leak detected. %d listeners added. "+"Use emitter.setMaxListeners() to increase limit.",this._events[type].length);if(typeof console.trace==="function"){console.trace()}}}return this};EventEmitter.prototype.on=EventEmitter.prototype.addListener;EventEmitter.prototype.once=function(type,listener){if(!isFunction(listener))throw TypeError("listener must be a function");var fired=false;function g(){this.removeListener(type,g);if(!fired){fired=true;listener.apply(this,arguments)}}g.listener=listener;this.on(type,g);return this};EventEmitter.prototype.removeListener=function(type,listener){var list,position,length,i;if(!isFunction(listener))throw TypeError("listener must be a function");if(!this._events||!this._events[type])return this;list=this._events[type];length=list.length;position=-1;if(list===listener||isFunction(list.listener)&&list.listener===listener){delete this._events[type];if(this._events.removeListener)this.emit("removeListener",type,listener)}else if(isObject(list)){for(i=length;i-- >0;){if(list[i]===listener||list[i].listener&&list[i].listener===listener){position=i;break}}if(position<0)return this;if(list.length===1){list.length=0;delete this._events[type]}else{list.splice(position,1)}if(this._events.removeListener)this.emit("removeListener",type,listener)}return this};EventEmitter.prototype.removeAllListeners=function(type){var key,listeners;if(!this._events)return this;if(!this._events.removeListener){if(arguments.length===0)this._events={};else if(this._events[type])delete this._events[type];return this}if(arguments.length===0){for(key in this._events){if(key==="removeListener")continue;this.removeAllListeners(key)}this.removeAllListeners("removeListener");this._events={};return this}listeners=this._events[type];if(isFunction(listeners)){this.removeListener(type,listeners)}else if(listeners){while(listeners.length)this.removeListener(type,listeners[listeners.length-1])}delete this._events[type];return this};EventEmitter.prototype.listeners=function(type){var ret;if(!this._events||!this._events[type])ret=[];else if(isFunction(this._events[type]))ret=[this._events[type]];else ret=this._events[type].slice();return ret};EventEmitter.prototype.listenerCount=function(type){if(this._events){var evlistener=this._events[type];if(isFunction(evlistener))return 1;else if(evlistener)return evlistener.length}return 0};EventEmitter.listenerCount=function(emitter,type){return emitter.listenerCount(type)};function isFunction(arg){return typeof arg==="function"}function isNumber(arg){return typeof arg==="number"}function isObject(arg){return typeof arg==="object"&&arg!==null}function isUndefined(arg){return arg===void 0}},{}],2:[function(require,module,exports){var UA,browser,mode,platform,ua;ua=navigator.userAgent.toLowerCase();platform=navigator.platform.toLowerCase();UA=ua.match(/(opera|ie|firefox|chrome|version)[\s\/:]([\w\d\.]+)?.*?(safari|version[\s\/:]([\w\d\.]+)|$)/)||[null,"unknown",0];mode=UA[1]==="ie"&&document.documentMode;browser={name:UA[1]==="version"?UA[3]:UA[1],version:mode||parseFloat(UA[1]==="opera"&&UA[4]?UA[4]:UA[2]),platform:{name:ua.match(/ip(?:ad|od|hone)/)?"ios":(ua.match(/(?:webos|android)/)||platform.match(/mac|win|linux/)||["other"])[0]}};browser[browser.name]=true;browser[browser.name+parseInt(browser.version,10)]=true;browser.platform[browser.platform.name]=true;module.exports=browser},{}],3:[function(require,module,exports){var EventEmitter,GIF,browser,extend=function(child,parent){for(var key in parent){if(hasProp.call(parent,key))child[key]=parent[key]}function ctor(){this.constructor=child}ctor.prototype=parent.prototype;child.prototype=new ctor;child.__super__=parent.prototype;return child},hasProp={}.hasOwnProperty,indexOf=[].indexOf||function(item){for(var i=0,l=this.length;i<l;i++){if(i in this&&this[i]===item)return i}return-1},slice=[].slice;EventEmitter=require("events").EventEmitter;browser=require("./browser.coffee");GIF=function(superClass){var defaults,frameDefaults;extend(GIF,superClass);defaults={workerScript:"gif.worker.js",workers:2,repeat:0,background:"#fff",quality:10,width:null,height:null,transparent:null,debug:false,dither:false};frameDefaults={delay:500,copy:false};function GIF(options){var base,key,value;this.running=false;this.options={};this.frames=[];this.freeWorkers=[];this.activeWorkers=[];this.setOptions(options);for(key in defaults){value=defaults[key];if((base=this.options)[key]==null){base[key]=value}}}GIF.prototype.setOption=function(key,value){this.options[key]=value;if(this._canvas!=null&&(key==="width"||key==="height")){return this._canvas[key]=value}};GIF.prototype.setOptions=function(options){var key,results,value;results=[];for(key in options){if(!hasProp.call(options,key))continue;value=options[key];results.push(this.setOption(key,value))}return results};GIF.prototype.addFrame=function(image,options){var frame,key;if(options==null){options={}}frame={};frame.transparent=this.options.transparent;for(key in frameDefaults){frame[key]=options[key]||frameDefaults[key]}if(this.options.width==null){this.setOption("width",image.width)}if(this.options.height==null){this.setOption("height",image.height)}if(typeof ImageData!=="undefined"&&ImageData!==null&&image instanceof ImageData){frame.data=image.data}else if(typeof CanvasRenderingContext2D!=="undefined"&&CanvasRenderingContext2D!==null&&image instanceof CanvasRenderingContext2D||typeof WebGLRenderingContext!=="undefined"&&WebGLRenderingContext!==null&&image instanceof WebGLRenderingContext){if(options.copy){frame.data=this.getContextData(image)}else{frame.context=image}}else if(image.childNodes!=null){if(options.copy){frame.data=this.getImageData(image)}else{frame.image=image}}else{throw new Error("Invalid image")}return this.frames.push(frame)};GIF.prototype.render=function(){var i,j,numWorkers,ref;if(this.running){throw new Error("Already running")}if(this.options.width==null||this.options.height==null){throw new Error("Width and height must be set prior to rendering")}this.running=true;this.nextFrame=0;this.finishedFrames=0;this.imageParts=function(){var j,ref,results;results=[];for(i=j=0,ref=this.frames.length;0<=ref?j<ref:j>ref;i=0<=ref?++j:--j){results.push(null)}return results}.call(this);numWorkers=this.spawnWorkers();if(this.options.globalPalette===true){this.renderNextFrame()}else{for(i=j=0,ref=numWorkers;0<=ref?j<ref:j>ref;i=0<=ref?++j:--j){this.renderNextFrame()}}this.emit("start");return this.emit("progress",0)};GIF.prototype.abort=function(){var worker;while(true){worker=this.activeWorkers.shift();if(worker==null){break}this.log("killing active worker");worker.terminate()}this.running=false;return this.emit("abort")};GIF.prototype.spawnWorkers=function(){var j,numWorkers,ref,results;numWorkers=Math.min(this.options.workers,this.frames.length);(function(){results=[];for(var j=ref=this.freeWorkers.length;ref<=numWorkers?j<numWorkers:j>numWorkers;ref<=numWorkers?j++:j--){results.push(j)}return results}).apply(this).forEach(function(_this){return function(i){var worker;_this.log("spawning worker "+i);worker=new Worker(_this.options.workerScript);worker.onmessage=function(event){_this.activeWorkers.splice(_this.activeWorkers.indexOf(worker),1);_this.freeWorkers.push(worker);return _this.frameFinished(event.data)};return _this.freeWorkers.push(worker)}}(this));return numWorkers};GIF.prototype.frameFinished=function(frame){var i,j,ref;this.log("frame "+frame.index+" finished - "+this.activeWorkers.length+" active");this.finishedFrames++;this.emit("progress",this.finishedFrames/this.frames.length);this.imageParts[frame.index]=frame;if(this.options.globalPalette===true){this.options.globalPalette=frame.globalPalette;this.log("global palette analyzed");if(this.frames.length>2){for(i=j=1,ref=this.freeWorkers.length;1<=ref?j<ref:j>ref;i=1<=ref?++j:--j){this.renderNextFrame()}}}if(indexOf.call(this.imageParts,null)>=0){return this.renderNextFrame()}else{return this.finishRendering()}};GIF.prototype.finishRendering=function(){var data,frame,i,image,j,k,l,len,len1,len2,len3,offset,page,ref,ref1,ref2;len=0;ref=this.imageParts;for(j=0,len1=ref.length;j<len1;j++){frame=ref[j];len+=(frame.data.length-1)*frame.pageSize+frame.cursor}len+=frame.pageSize-frame.cursor;this.log("rendering finished - filesize "+Math.round(len/1e3)+"kb");data=new Uint8Array(len);offset=0;ref1=this.imageParts;for(k=0,len2=ref1.length;k<len2;k++){frame=ref1[k];ref2=frame.data;for(i=l=0,len3=ref2.length;l<len3;i=++l){page=ref2[i];data.set(page,offset);if(i===frame.data.length-1){offset+=frame.cursor}else{offset+=frame.pageSize}}}image=new Blob([data],{type:"image/gif"});return this.emit("finished",image,data)};GIF.prototype.renderNextFrame=function(){var frame,task,worker;if(this.freeWorkers.length===0){throw new Error("No free workers")}if(this.nextFrame>=this.frames.length){return}frame=this.frames[this.nextFrame++];worker=this.freeWorkers.shift();task=this.getTask(frame);this.log("starting frame "+(task.index+1)+" of "+this.frames.length);this.activeWorkers.push(worker);return worker.postMessage(task)};GIF.prototype.getContextData=function(ctx){return ctx.getImageData(0,0,this.options.width,this.options.height).data};GIF.prototype.getImageData=function(image){var ctx;if(this._canvas==null){this._canvas=document.createElement("canvas");this._canvas.width=this.options.width;this._canvas.height=this.options.height}ctx=this._canvas.getContext("2d");ctx.setFill=this.options.background;ctx.fillRect(0,0,this.options.width,this.options.height);ctx.drawImage(image,0,0);return this.getContextData(ctx)};GIF.prototype.getTask=function(frame){var index,task;index=this.frames.indexOf(frame);task={index:index,last:index===this.frames.length-1,delay:frame.delay,transparent:frame.transparent,width:this.options.width,height:this.options.height,quality:this.options.quality,dither:this.options.dither,globalPalette:this.options.globalPalette,repeat:this.options.repeat,canTransfer:browser.name==="chrome"};if(frame.data!=null){task.data=frame.data}else if(frame.context!=null){task.data=this.getContextData(frame.context)}else if(frame.image!=null){task.data=this.getImageData(frame.image)}else{throw new Error("Invalid frame")}return task};GIF.prototype.log=function(){var args;args=1<=arguments.length?slice.call(arguments,0):[];if(!this.options.debug){return}return console.log.apply(console,args)};return GIF}(EventEmitter);module.exports=GIF},{"./browser.coffee":2,events:1}]},{},[3])(3)});
+//# sourceMappingURL=gif.js.map
+</script>
+<style>
+  :root{
+    --bg:#0f172a; --panel:#1e293b; --panel2:#222527; --line:#2e3134;
+    --text:#e2e8f0; --muted:#9a978f; --accent:#247bf7; --accent2:#247bf7;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg); color:var(--text);
+    font:13px/1.45 "Segoe UI", system-ui, sans-serif;
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+  header{
+    display:flex; align-items:center; gap:8px;
+    padding:8px 14px; background:var(--panel); border-bottom:1px solid var(--line);
+    flex-wrap:wrap;
+  }
+  header .logo{font-family:Georgia,serif; font-size:19px; letter-spacing:.3px; margin-right:4px; display:flex; align-items:baseline; gap:7px;}
+  header .logo b{color:var(--accent); font-weight:normal;}
+  header .logo .dots span{display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--accent); margin-left:3px; animation:flow 1.6s infinite;}
+  header .logo .dots span:nth-child(2){animation-delay:.25s; opacity:.65;}
+  header .logo .dots span:nth-child(3){animation-delay:.5s; opacity:.35;}
+  @keyframes flow{0%,100%{transform:translateY(0);}50%{transform:translateY(-3px);}}
+  @media (prefers-reduced-motion: reduce){ header .logo .dots span{animation:none;} }
+  .spacer{flex:1;}
+  button, select{
+    background:var(--panel2); color:var(--text); border:1px solid var(--line);
+    border-radius:7px; padding:6px 11px; cursor:pointer; font:inherit;
+  }
+  button:hover{border-color:#4a4e52;}
+  button.primary{background:var(--accent); border-color:var(--accent); color:#16110c; font-weight:600;}
+  button.primary:hover{filter:brightness(1.08);}
+  button.toggled{background:#3a3326; border-color:var(--accent); color:var(--accent);}
+  button:focus-visible, select:focus-visible, input:focus-visible{outline:2px solid var(--accent2); outline-offset:1px;}
+  main{flex:1; display:flex; min-height:0;}
+  /* ---- tool rail ---- */
+  .rail{
+    width:64px; background:var(--panel); border-right:1px solid var(--line);
+    display:flex; flex-direction:column; align-items:center; gap:5px; padding:10px 0; overflow-y:auto;
+  }
+  .rail button{
+    width:48px; height:44px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:2px; font-size:9px; color:var(--muted); padding:2px; flex-shrink:0;
+  }
+  .rail button svg{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:1.6;}
+  .rail button.toggled{color:var(--accent);}
+  .rail hr{width:36px; border:none; border-top:1px solid var(--line); margin:3px 0; flex-shrink:0;}
+  /* ---- stage ---- */
+  .stage{flex:1; display:flex; align-items:center; justify-content:center; padding:14px; min-width:0; position:relative; background:
+    radial-gradient(circle at 50% 40%, #17181a 0%, #101112 70%);}
+  #wrap{position:relative; aspect-ratio:16/9; width:min(100%, calc((100dvh - 170px) * 1.7778), 1500px); box-shadow:0 8px 40px rgba(0,0,0,.5); border-radius:6px; overflow:hidden;}
+  #cv{width:100%; height:100%; display:block; cursor:default; touch-action:none;}
+  #editBox{
+    position:absolute; display:none; background:#000c; color:#fff; border:1px solid var(--accent);
+    border-radius:6px; padding:4px 8px; font:15px Georgia,serif; text-align:center; resize:none; overflow:hidden; z-index:5;
+  }
+  /* ---- icon drawer ---- */
+  #iconDrawer{
+    position:absolute; left:74px; top:60px; bottom:46px; width:236px; z-index:20;
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:12px; overflow-y:auto; display:none; box-shadow:0 10px 30px #000a;
+  }
+  #iconDrawer h4{font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin:10px 0 6px;}
+  #iconDrawer h4:first-child{margin-top:0;}
+  .iconGrid{display:grid; grid-template-columns:repeat(4,1fr); gap:5px;}
+  .iconGrid button{display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 2px; font-size:8.5px; color:var(--muted); height:auto;}
+  .iconGrid img{width:28px; height:28px;}
+  /* ---- right panel ---- */
+  aside{
+    width:252px; background:var(--panel); border-left:1px solid var(--line);
+    padding:14px; overflow-y:auto; display:flex; flex-direction:column; gap:16px;
+  }
+  aside h3{font-size:11px; text-transform:uppercase; letter-spacing:1.2px; color:var(--muted); margin-bottom:8px; font-weight:600;}
+  .row{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:7px;}
+  .row label{color:var(--muted); font-size:12px;}
+  .row input[type=range]{width:110px; accent-color:var(--accent);}
+  .row input[type=number]{width:64px; background:var(--panel2); color:var(--text); border:1px solid var(--line); border-radius:6px; padding:4px 6px; font:inherit;}
+  .row select{width:118px; padding:4px 6px;}
+  .row input[type=checkbox]{accent-color:var(--accent); width:15px; height:15px;}
+  .swatches{display:flex; flex-wrap:wrap; gap:6px;}
+  .swatch{width:24px; height:24px; border-radius:6px; border:2px solid transparent; cursor:pointer;}
+  .swatch.sel{border-color:#fff;}
+  textarea#lblEdit{width:100%; background:var(--panel2); color:var(--text); border:1px solid var(--line); border-radius:6px; padding:6px; font:inherit; resize:vertical; min-height:40px;}
+  .hint{color:var(--muted); font-size:11px; line-height:1.5;}
+  .danger{color:#c97070;}
+  .wfull{width:100%; margin-top:6px;}
+  .btnGrid{display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px;}
+  /* ---- pages bar ---- */
+  footer{
+    display:flex; align-items:center; gap:4px; padding:5px 10px;
+    background:var(--panel); border-top:1px solid var(--line); overflow-x:auto;
+  }
+  footer .tab{
+    display:flex; align-items:center; gap:7px; padding:5px 10px; border-radius:7px 7px 0 0;
+    border:1px solid var(--line); border-bottom:none; background:var(--panel2); color:var(--muted);
+    cursor:pointer; white-space:nowrap; font-size:12px;
+  }
+  footer .tab.active{background:#2c2620; color:var(--accent); border-color:#4a3d2c;}
+  footer .tab .x{opacity:.55; padding:0 1px;}
+  footer .tab .x:hover{opacity:1; color:#c97070;}
+  /* ---- modal / overlay ---- */
+  .overlay{
+    position:fixed; inset:0; background:#000c; display:none; align-items:center; justify-content:center; z-index:50;
+  }
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:24px 28px; min-width:320px;}
+  .card h2{font-family:Georgia,serif; font-size:17px; font-weight:normal; margin-bottom:14px;}
+  #bar{width:100%; height:8px; background:var(--panel2); border-radius:4px; overflow:hidden; margin-top:12px;}
+  #barFill{height:100%; width:0%; background:var(--accent); transition:width .15s;}
+  @media (prefers-reduced-motion: reduce){ #barFill{transition:none;} }
+  .card .actions{display:flex; justify-content:flex-end; gap:8px; margin-top:16px;}
+  kbd{background:var(--panel2); border:1px solid var(--line); border-radius:4px; padding:0 4px; font-size:11px;}
+
+  /* ============ Responsive ============ */
+  @media (max-width: 700px) {
+    header { gap: 4px; padding: 5px 8px; }
+    header .logo { font-size: 15px; }
+    #btnClear { display: none; }
+
+    main { flex-direction: column; }
+
+    .rail {
+      width: 100%; height: auto;
+      flex-direction: row; flex-wrap: nowrap;
+      overflow-x: auto; overflow-y: hidden;
+      padding: 4px 6px; gap: 2px;
+      border-right: none; border-bottom: 1px solid var(--line);
+    }
+    .rail button {
+      width: auto; min-width: 40px; height: 36px;
+      flex-direction: row; gap: 4px;
+      font-size: 8.5px; flex-shrink: 0; padding: 4px 6px;
+    }
+    .rail button svg { width: 16px; height: 16px; }
+    .rail hr {
+      width: 1px; height: 22px;
+      border-top: none; border-left: 1px solid var(--line);
+      margin: 0 1px; flex-shrink: 0;
+    }
+
+    .stage { padding: 6px; }
+    #wrap { width: min(100%, calc((100dvh - 220px) * 1.7778), 1500px); }
+
+    aside { display: none; }
+
+    #iconDrawer {
+      left: 4px; right: 4px; width: auto;
+      top: auto; bottom: 46px;
+    }
+  }
+
+  @media (min-width: 701px) and (max-width: 1024px) {
+    aside { width: 200px; }
+    .row input[type=range] { width: 90px; }
+    .row select { width: 100px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo">flu<b>yo</b><span class="dots" aria-hidden="true"><span></span><span></span><span></span></span></span>
+  <button id="btnDemo">Ejemplo</button>
+  <button id="btnClear">Limpiar página</button>
+  <span class="spacer"></span>
+  <select id="themeSel" title="Tema del lienzo">
+    <option value="dark">Fondo oscuro</option>
+    <option value="crema">Fondo crema</option>
+  </select>
+  <button id="btnPlay" class="toggled">⏸ Pausa</button>
+  <button id="btnJsonOut" title="Guardar archivo .fluyo.json (Ctrl+S)">💾 Guardar</button>
+  <button id="btnJsonIn" title="Abrir archivo guardado">📂 Abrir</button>
+  <input type="file" id="fileIn" accept=".json,.fluyo" style="display:none">
+  <input type="file" id="imgIn" accept="image/*" style="display:none">
+  <button id="btnExport" class="primary">⬇ Exportar</button>
+</header>
+
+<main>
+  <nav class="rail" aria-label="Herramientas">
+    <button data-mode="select" class="toggled" title="Seleccionar / mover (V)">
+      <svg viewBox="0 0 24 24"><path d="M6 3l12 9-5.5 1L10 19z"/></svg>Mover
+    </button>
+    <button data-mode="connect" title="Conectar con clics (C)">
+      <svg viewBox="0 0 24 24"><circle cx="5" cy="19" r="2.4"/><circle cx="19" cy="5" r="2.4"/><path d="M7 17L17 7"/></svg>Flecha
+    </button>
+    <hr>
+    <button data-shape="rect" title="Caja"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="3"/></svg>Caja</button>
+    <button data-shape="cylinder" title="Base de datos"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/></svg>BD</button>
+    <button data-shape="diamond" title="Decisión"><svg viewBox="0 0 24 24"><path d="M12 3l9 9-9 9-9-9z"/></svg>Rombo</button>
+    <button data-shape="circle" title="Círculo"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg>Círculo</button>
+    <button data-shape="hex" title="Hexágono"><svg viewBox="0 0 24 24"><path d="M7 4h10l4 8-4 8H7l-4-8z"/></svg>Hex</button>
+    <button data-shape="text" title="Solo texto"><svg viewBox="0 0 24 24"><path d="M5 6h14M12 6v13"/></svg>Texto</button>
+    <hr>
+    <button id="btnIcons" title="Iconos cloud (GCP, AWS, Azure…)">
+      <svg viewBox="0 0 24 24"><path d="M7 17a4 4 0 0 1 0-8 5.5 5.5 0 0 1 10.6 1.4A3.5 3.5 0 0 1 17 17z"/></svg>Iconos
+    </button>
+    <button id="btnImg" title="Insertar imagen (o pega con Ctrl+V)">
+      <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4 17l5-5 4 4 3-3 4 4"/></svg>Imagen
+    </button>
+  </nav>
+
+  <div class="stage">
+    <div id="wrap">
+      <canvas id="cv" width="1280" height="720"></canvas>
+      <textarea id="editBox" rows="1"></textarea>
+    </div>
+    <div id="iconDrawer" role="dialog" aria-label="Iconos"></div>
+  </div>
+
+  <aside>
+    <section>
+      <h3>Selección</h3>
+      <div id="noSel" class="hint">Nada seleccionado.<br><br>
+        • Forma del menú izquierdo → clic en el lienzo.<br>
+        • Pasa el mouse sobre un nodo y <b>arrastra una flecha azul</b> para conectar.<br>
+        • <b>Arrastra en el vacío</b> para seleccionar varios; <kbd>Shift</kbd>+clic suma o quita.<br>
+        • <kbd>Ctrl+C</kbd> copiar · <kbd>Ctrl+X</kbd> cortar · <kbd>Ctrl+V</kbd> pegar · <kbd>Ctrl+D</kbd> duplicar · <kbd>Ctrl+A</kbd> todo.<br>
+        • <kbd>Ctrl+Z</kbd> deshacer · <kbd>Ctrl+Y</kbd> rehacer.<br>
+        • Doble clic = editar texto. <kbd>Supr</kbd> borra. <kbd>Esc</kbd> cancela.<br>
+        • Con una flecha seleccionada, arrastra los <b>puntos huecos</b> para doblarla; doble clic en un codo lo elimina.<br>
+        • Pega imágenes con <kbd>Ctrl+V</kbd>.
+      </div>
+      <div id="multiSel" style="display:none">
+        <p class="hint" id="multiCount" style="font-size:12px; color:var(--text);"></p>
+        <div class="btnGrid">
+          <button id="mCopy">Copiar</button>
+          <button id="mCut">Cortar</button>
+          <button id="mDup">Duplicar</button>
+          <button id="mDel" class="danger">Eliminar</button>
+        </div>
+      </div>
+      <div id="selBody" style="display:none">
+        <div class="row" style="flex-direction:column; align-items:stretch;">
+          <label for="lblEdit">Texto (Enter = nueva línea)</label>
+          <textarea id="lblEdit"></textarea>
+        </div>
+        <div class="row" id="rowFs"><label>Tamaño de texto</label><input type="number" id="fsIn" min="8" max="96" placeholder="auto"></div>
+        <div class="row" id="rowColor" style="flex-direction:column; align-items:stretch;">
+          <label>Color semántico</label>
+          <div class="swatches" id="swatches"></div>
+        </div>
+        <div class="row" id="rowShape"><label>Forma</label>
+          <select id="shapeSel">
+            <option value="rect">Caja</option><option value="cylinder">BD</option>
+            <option value="diamond">Rombo</option><option value="circle">Círculo</option>
+            <option value="hex">Hexágono</option><option value="text">Texto</option>
+          </select>
+        </div>
+        <div class="row" id="rowPulse"><label>Pulso (resaltar)</label><input type="checkbox" id="pulseChk"></div>
+        <div class="row" id="rowOrder"><label>Orden de aparición</label><input type="number" id="orderIn" min="0" max="99"></div>
+        <div class="row" id="rowRoute"><label>Ruta</label>
+          <select id="routeSel"><option value="straight">Recta</option><option value="ortho">Ortogonal</option></select>
+        </div>
+        <div class="row" id="rowFrom"><label>Sale por</label>
+          <select id="fromSel"><option value="">Auto</option><option value="n">Arriba</option><option value="e">Derecha</option><option value="s">Abajo</option><option value="w">Izquierda</option></select>
+        </div>
+        <div class="row" id="rowTo"><label>Entra por</label>
+          <select id="toSel"><option value="">Auto</option><option value="n">Arriba</option><option value="e">Derecha</option><option value="s">Abajo</option><option value="w">Izquierda</option></select>
+        </div>
+        <div class="row" id="rowAnim"><label>Puntos animados</label><input type="checkbox" id="animChk"></div>
+        <div class="row" id="rowLineC" style="flex-direction:column; align-items:stretch;">
+          <label>Color de línea</label>
+          <div class="swatches" id="lineSw"></div>
+        </div>
+        <div class="row" id="rowDotC" style="flex-direction:column; align-items:stretch;">
+          <label>Color de puntos</label>
+          <div class="swatches" id="dotSw"></div>
+        </div>
+        <div class="row" id="rowDash"><label>Línea punteada</label><input type="checkbox" id="dashChk"></div>
+        <div class="row" id="rowArrS"><label>Punta al inicio</label><input type="checkbox" id="arrSChk"></div>
+        <div class="row" id="rowArrE"><label>Punta al final</label><input type="checkbox" id="arrEChk"></div>
+        <div class="row" id="rowFlow"><label>Flujo de puntos</label>
+          <select id="flowSel"><option value="normal">Normal →</option><option value="reverse">Inverso ←</option><option value="alternate">Alterno ⇄</option></select>
+        </div>
+        <button id="btnWps" class="wfull" style="display:none">Quitar codos</button>
+        <button id="btnDel" class="danger wfull">Eliminar (Supr)</button>
+      </div>
+    </section>
+
+    <section>
+      <h3>Animación</h3>
+      <div class="row"><label>Velocidad de flujo</label><input type="range" id="speedIn" min="0.2" max="2" step="0.1" value="0.5"></div>
+      <div class="row"><label>Puntos por flecha</label><input type="range" id="dotsIn" min="1" max="6" step="1" value="3"></div>
+      <div class="row"><label>Animar aparición</label><input type="checkbox" id="buildChk"></div>
+      <div class="row"><label>Intervalo aparición</label><input type="range" id="staggerIn" min="0.2" max="1.2" step="0.1" value="0.45"></div>
+      <p class="hint">La aparición usa el «orden» de cada nodo. Las flechas aparecen cuando ambos nodos son visibles.</p>
+    </section>
+  </aside>
+</main>
+
+<footer id="pagesBar"></footer>
+
+<!-- Export modal -->
+<div class="overlay" id="exModal">
+  <div class="card">
+    <h2>Exportar página actual</h2>
+    <div class="row"><label>Formato</label>
+      <select id="exFmt">
+        <option value="gif">GIF animado</option>
+        <option value="png">PNG</option>
+        <option value="jpg">JPG</option>
+      </select>
+    </div>
+    <div class="row"><label>Resolución</label>
+      <select id="exRes">
+        <option value="0.5">640 × 360</option>
+        <option value="0.75">960 × 540</option>
+        <option value="1" selected>1280 × 720</option>
+        <option value="1.5">1920 × 1080</option>
+      </select>
+    </div>
+    <div class="row" id="exRowTr"><label>Fondo transparente</label><input type="checkbox" id="exTr"></div>
+    <div class="row" id="exRowFps"><label>FPS</label>
+      <select id="exFps"><option>15</option><option selected>20</option><option>25</option></select>
+    </div>
+    <div class="row" id="exRowDur"><label>Duración (s)</label><input type="number" id="exDur" min="1" max="15" step="0.5" value="3"></div>
+    <p class="hint" id="exHint">El loop de flujo se ajusta solo para que el GIF sea cíclico. La transparencia en GIF es de bordes duros (limitación del formato); para bordes suaves usa PNG.</p>
+    <div class="actions">
+      <button id="exCancel">Cancelar</button>
+      <button id="exGo" class="primary">Exportar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Progress overlay -->
+<div class="overlay" id="progOv">
+  <div class="card" style="text-align:center;">
+    <h2>Generando GIF…</h2>
+    <div class="hint" id="ovMsg">Renderizando fotogramas</div>
+    <div id="bar"><div id="barFill"></div></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ===================== Constantes ===================== */
+const W=1280, H=720, GRID=20, ARROW_OFF=24, HANDLE=7;
+const PALETTE=[
+  {c:"#6a9fb5", n:"Servicio"},
+  {c:"#d08b5b", n:"Eventos / Kafka"},
+  {c:"#7fa66b", n:"Datos"},
+  {c:"#9b7fb5", n:"IA"},
+  {c:"#c16a6a", n:"Alerta"},
+  {c:"#8f8f8f", n:"Externo"},
+  {c:"#c9b458", n:"Config"},
+];
+const THEMES={
+  dark : {bg:"#161616", grid:"rgba(255,255,255,.045)", text:"#ededed", edge:"#777", edgeLbl:"#bdbdbd", lblBg:"#161616"},
+  crema: {bg:"#f4eee1", grid:"rgba(0,0,0,.06)",        text:"#2b2620", edge:"#8a8275", edgeLbl:"#6b6457", lblBg:"#f4eee1"},
+};
+const DIR={n:{x:0,y:-1}, s:{x:0,y:1}, e:{x:1,y:0}, w:{x:-1,y:0}};
+const SIDES=["n","e","s","w"];
+
+/* ===================== Iconos cloud (SVG simplificados) ===================== */
+const badge=(bg,inner)=>`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="2" y="2" width="60" height="60" rx="14" fill="${bg}"/>${inner}</svg>`;
+const wheel=col=>{let s="";for(let i=0;i<6;i++){const a=i*Math.PI/3-Math.PI/2,x=32+Math.cos(a)*15,y=32+Math.sin(a)*15;s+=`<line x1="32" y1="32" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${col}" stroke-width="3.4"/>`;}return s+`<circle cx="32" cy="32" r="16" fill="none" stroke="${col}" stroke-width="3.6"/><circle cx="32" cy="32" r="5" fill="${col}"/>`;};
+const cylin=col=>`<path d="M18 22 v20 c0 4 6 7 14 7 s14 -3 14 -7 V22" fill="none" stroke="${col}" stroke-width="3.6"/><ellipse cx="32" cy="22" rx="14" ry="6.5" fill="none" stroke="${col}" stroke-width="3.6"/>`;
+const txtG=(t,col,fs=30)=>`<text x="32" y="33" font-size="${fs}" font-family="Georgia,serif" fill="${col}" text-anchor="middle" dominant-baseline="central">${t}</text>`;
+const GCP_BLUE="#4285f4", AWS_BG="#232f3e", AWS_OR="#ff9900", AZ_BLUE="#0078d4";
+const ICONS={
+  /* --- General --- */
+  kafka:{g:"General",n:"Kafka",svg:badge("#1b1b1b",
+    `<circle cx="32" cy="14" r="6" fill="#fff"/><circle cx="32" cy="50" r="6" fill="#fff"/><circle cx="46" cy="23" r="6" fill="#fff"/><circle cx="46" cy="41" r="6" fill="#fff"/><circle cx="28" cy="32" r="7" fill="#fff"/><line x1="32" y1="18" x2="42" y2="24" stroke="#fff" stroke-width="3"/><line x1="42" y1="40" x2="32" y2="46" stroke="#fff" stroke-width="3"/><line x1="30" y1="20" x2="29" y2="26" stroke="#fff" stroke-width="3"/><line x1="29" y1="38" x2="30" y2="44" stroke="#fff" stroke-width="3"/>`)},
+  k8s:{g:"General",n:"K8s",svg:badge("#326ce5",wheel("#fff"))},
+  db:{g:"General",n:"BD",svg:badge("#3b4252",cylin("#fff"))},
+  queue:{g:"General",n:"Cola",svg:badge("#5b4a72",`<rect x="14" y="18" width="24" height="8" rx="3" fill="#fff"/><rect x="14" y="29" width="24" height="8" rx="3" fill="#fff"/><rect x="14" y="40" width="24" height="8" rx="3" fill="#fff"/><path d="M42 28 l10 5 -10 5z" fill="#fff"/>`)},
+  user:{g:"General",n:"Usuario",svg:badge("#6b7b8c",`<circle cx="32" cy="24" r="9" fill="#fff"/><path d="M15 50 c2-11 8-15 17-15 s15 4 17 15z" fill="#fff"/>`)},
+  movil:{g:"General",n:"Móvil",svg:badge("#4a5560",`<rect x="22" y="12" width="20" height="40" rx="4" fill="none" stroke="#fff" stroke-width="3.4"/><circle cx="32" cy="45" r="2.4" fill="#fff"/>`)},
+  web:{g:"General",n:"Web",svg:badge("#3c6e71",`<circle cx="32" cy="32" r="17" fill="none" stroke="#fff" stroke-width="3.2"/><ellipse cx="32" cy="32" rx="8" ry="17" fill="none" stroke="#fff" stroke-width="3"/><line x1="15" y1="32" x2="49" y2="32" stroke="#fff" stroke-width="3"/>`)},
+  api:{g:"General",n:"API",svg:badge("#2f4858",txtG("&lt;/&gt;","#fff",22))},
+  lock:{g:"General",n:"Seguridad",svg:badge("#7a3b3b",`<rect x="19" y="29" width="26" height="21" rx="4" fill="#fff"/><path d="M24 29 v-5 a8 8 0 0 1 16 0 v5" fill="none" stroke="#fff" stroke-width="3.6"/>`)},
+  ai:{g:"General",n:"IA",svg:badge("#6d5a96",`<path d="M32 12 l4.5 13 13 4.5 -13 4.5 -4.5 13 -4.5 -13 -13 -4.5 13 -4.5z" fill="#fff"/><circle cx="48" cy="16" r="3.4" fill="#fff"/>`)},
+  /* --- GCP --- */
+  gke:{g:"GCP",n:"GKE",svg:badge(GCP_BLUE,wheel("#fff"))},
+  cloudsql:{g:"GCP",n:"Cloud SQL",svg:badge(GCP_BLUE,cylin("#fff"))},
+  pubsub:{g:"GCP",n:"Pub/Sub",svg:badge(GCP_BLUE,`<circle cx="32" cy="16" r="6" fill="#fff"/><circle cx="18" cy="44" r="6" fill="#fff"/><circle cx="46" cy="44" r="6" fill="#fff"/><circle cx="32" cy="33" r="4.4" fill="#fff"/><line x1="32" y1="21" x2="32" y2="29" stroke="#fff" stroke-width="3"/><line x1="28" y1="36" x2="22" y2="40" stroke="#fff" stroke-width="3"/><line x1="36" y1="36" x2="42" y2="40" stroke="#fff" stroke-width="3"/>`)},
+  bigquery:{g:"GCP",n:"BigQuery",svg:badge(GCP_BLUE,`<circle cx="29" cy="29" r="13" fill="none" stroke="#fff" stroke-width="3.6"/><line x1="38" y1="38" x2="49" y2="49" stroke="#fff" stroke-width="5" stroke-linecap="round"/><line x1="24" y1="31" x2="24" y2="34" stroke="#fff" stroke-width="3"/><line x1="29" y1="26" x2="29" y2="34" stroke="#fff" stroke-width="3"/><line x1="34" y1="29" x2="34" y2="34" stroke="#fff" stroke-width="3"/>`)},
+  run:{g:"GCP",n:"Cloud Run",svg:badge(GCP_BLUE,`<circle cx="32" cy="32" r="17" fill="none" stroke="#fff" stroke-width="3.4"/><path d="M27 24 l13 8 -13 8z" fill="#fff"/>`)},
+  gcs:{g:"GCP",n:"Storage",svg:badge(GCP_BLUE,`<rect x="16" y="20" width="32" height="10" rx="3" fill="#fff"/><rect x="16" y="34" width="32" height="10" rx="3" fill="#fff"/><circle cx="42" cy="25" r="2.2" fill="${GCP_BLUE}"/><circle cx="42" cy="39" r="2.2" fill="${GCP_BLUE}"/>`)},
+  vertex:{g:"GCP",n:"Vertex AI",svg:badge(GCP_BLUE,`<circle cx="20" cy="20" r="4" fill="#fff"/><circle cx="44" cy="20" r="4" fill="#fff"/><circle cx="32" cy="30" r="4" fill="#fff"/><circle cx="32" cy="46" r="5" fill="#fff"/><line x1="22" y1="23" x2="30" y2="28" stroke="#fff" stroke-width="2.6"/><line x1="42" y1="23" x2="34" y2="28" stroke="#fff" stroke-width="2.6"/><line x1="32" y1="34" x2="32" y2="41" stroke="#fff" stroke-width="2.6"/>`)},
+  gcf:{g:"GCP",n:"Functions",svg:badge(GCP_BLUE,txtG("ƒ","#fff",34))},
+  /* --- AWS --- */
+  lambda:{g:"AWS",n:"Lambda",svg:badge(AWS_BG,txtG("λ",AWS_OR,34))},
+  s3:{g:"AWS",n:"S3",svg:badge(AWS_BG,`<path d="M18 18 h28 l-4 30 q-10 5 -20 0z" fill="none" stroke="${AWS_OR}" stroke-width="3.4"/><ellipse cx="32" cy="18" rx="14" ry="5.4" fill="none" stroke="${AWS_OR}" stroke-width="3.4"/>`)},
+  ec2:{g:"AWS",n:"EC2",svg:badge(AWS_BG,`<rect x="20" y="20" width="24" height="24" rx="3" fill="none" stroke="${AWS_OR}" stroke-width="3.4"/>`+["26","32","38"].map(p=>`<line x1="${p}" y1="13" x2="${p}" y2="20" stroke="${AWS_OR}" stroke-width="3"/><line x1="${p}" y1="44" x2="${p}" y2="51" stroke="${AWS_OR}" stroke-width="3"/><line x1="13" y1="${p}" x2="20" y2="${p}" stroke="${AWS_OR}" stroke-width="3"/><line x1="44" y1="${p}" x2="51" y2="${p}" stroke="${AWS_OR}" stroke-width="3"/>`).join(""))},
+  dynamo:{g:"AWS",n:"DynamoDB",svg:badge(AWS_BG,cylin(AWS_OR))},
+  sqs:{g:"AWS",n:"SQS",svg:badge(AWS_BG,`<path d="M14 24 h26 m0 0 l-7 -6 m7 6 l-7 6" fill="none" stroke="${AWS_OR}" stroke-width="3.4"/><path d="M50 42 h-26 m0 0 l7 -6 m-7 6 l7 6" fill="none" stroke="${AWS_OR}" stroke-width="3.4"/>`)},
+  apigw:{g:"AWS",n:"API GW",svg:badge(AWS_BG,txtG("&lt;/&gt;",AWS_OR,21))},
+  /* --- Azure --- */
+  azvm:{g:"Azure",n:"VM",svg:badge(AZ_BLUE,`<rect x="16" y="17" width="32" height="22" rx="3" fill="none" stroke="#fff" stroke-width="3.4"/><line x1="24" y1="48" x2="40" y2="48" stroke="#fff" stroke-width="3.4"/><line x1="32" y1="39" x2="32" y2="48" stroke="#fff" stroke-width="3.4"/>`)},
+  azfun:{g:"Azure",n:"Functions",svg:badge(AZ_BLUE,`<path d="M36 12 L22 35 h9 l-4 17 16 -25 h-9z" fill="#ffd400"/>`)},
+  cosmos:{g:"Azure",n:"Cosmos DB",svg:badge(AZ_BLUE,`<circle cx="32" cy="32" r="12" fill="none" stroke="#fff" stroke-width="3.4"/><ellipse cx="32" cy="32" rx="22" ry="8" fill="none" stroke="#fff" stroke-width="2.6" transform="rotate(-20 32 32)"/>`)},
+  azbus:{g:"Azure",n:"Service Bus",svg:badge(AZ_BLUE,`<rect x="14" y="26" width="36" height="12" rx="4" fill="#fff"/><circle cx="22" cy="32" r="2.6" fill="${AZ_BLUE}"/><circle cx="32" cy="32" r="2.6" fill="${AZ_BLUE}"/><circle cx="42" cy="32" r="2.6" fill="${AZ_BLUE}"/>`)},
+  aks:{g:"Azure",n:"AKS",svg:badge(AZ_BLUE,`<path d="M32 12 l17 10 v20 l-17 10 -17 -10 V22z" fill="none" stroke="#fff" stroke-width="3.4"/><circle cx="32" cy="32" r="6" fill="#fff"/>`)},
+};
+const iconURL={}, imgCache={};
+for(const k in ICONS) iconURL[k]="data:image/svg+xml;utf8,"+encodeURIComponent(ICONS[k].svg);
+function getImg(src){
+  if(!imgCache[src]){ const im=new Image(); im.src=src; imgCache[src]=im; }
+  return imgCache[src];
+}
+
+/* ===================== Documento (páginas) ======
