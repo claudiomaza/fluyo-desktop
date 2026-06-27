@@ -6,7 +6,7 @@
   "build": {
     "distDir": "../ui",
     "devPath": "../ui",
-    "beforeBuildCommand": "cat ../ui/index.html.part.* > ../ui/index.html"
+    "beforeBuildCommand": ""
   },
   "tauri": {
     "allowlist": {
