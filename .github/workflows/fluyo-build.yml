@@ -22,7 +22,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p ui
-          cat ui/part_aa ui/part_ab ui/part_ac > ui/index.html
+          cat ui/index.html.part.* > ui/index.html
           echo "Reconstructed ui/index.html from parts"
       - name: Install dependencies
         run: npm install
