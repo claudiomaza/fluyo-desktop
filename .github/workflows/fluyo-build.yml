@@ -18,6 +18,12 @@ jobs:
         with:
           node-version: lts/*
       - uses: dtolnay/rust-toolchain@stable
+      - name: Prep UI
+        shell: bash
+        run: |
+          mkdir -p ui
+          cat ui/part_aa ui/part_ab ui/part_ac > ui/index.html
+          echo "Reconstructed ui/index.html from parts"
       - name: Install dependencies
         run: npm install
       - uses: tauri-apps/tauri-action@v0
